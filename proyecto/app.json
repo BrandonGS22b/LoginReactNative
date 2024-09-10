@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "curso-react-native",
-    "slug": "curso-react-native",
+    "name": "proyecto",
+    "slug": "proyecto",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
