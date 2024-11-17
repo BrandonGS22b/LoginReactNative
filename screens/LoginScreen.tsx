@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import { useAuth } from '../hooks/useAuth';
 
-const LoginScreen: React.FC = () => {
+type RootStackParamList = {
+  Login: undefined;
+  Dashboard: undefined;
+};
+
+type LoginScreenProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
+
+const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { login } = useAuth();
@@ -13,6 +21,7 @@ const LoginScreen: React.FC = () => {
   const handleLogin = async () => {
     try {
       await login(email, password);
+      navigation.replace('Dashboard'); // Redirige a la pantalla de Dashboard
     } catch (error) {
       setErrorMessage('Credenciales incorrectas');
     }

@@ -39,22 +39,20 @@ api.interceptors.request.use(
  * @param password Contraseña del usuario
  * @returns Información del usuario con token
  */
-const login = async (email: string, password: string): Promise<{ token: string; name: string; expiresIn: number }> => {
+const login = async (email: string, password: string): Promise<{ token: string; user: { id: string; name: string; email: string } }> => {
   try {
     const response = await api.post('/login', { email, password });
-    const { token, name, expiresIn } = response.data;
+    const { token, user } = response.data;
 
-    // Almacena los datos del usuario en AsyncStorage
+    // Almacena el token y otros datos en AsyncStorage
     await AsyncStorage.setItem('token', token);
-    await AsyncStorage.setItem('name', name);
-    await AsyncStorage.setItem('expiresIn', expiresIn.toString());
+    await AsyncStorage.setItem('user', JSON.stringify(user));
 
-    return { token, name, expiresIn };
+    return { token, user };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error('Error en login:', error.response?.data || error.message);
-    } else {
-      console.error('Error desconocido en login:', error);
+      throw new Error(error.response?.data?.message || 'Error en el inicio de sesión');
     }
     throw error;
   }

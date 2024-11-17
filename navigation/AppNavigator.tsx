@@ -5,7 +5,13 @@ import { useAuth } from '../hooks/useAuth';
 import LoginScreen from '../screens/LoginScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 
-const Stack = createStackNavigator();
+// Define el tipo de las rutas
+type RootStackParamList = {
+  Login: undefined;
+  Dashboard: undefined;
+};
+
+const Stack = createStackNavigator<RootStackParamList>();
 
 const AppNavigator = () => {
   const { user } = useAuth();
