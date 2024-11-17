@@ -1,4 +1,12 @@
-export interface User {
+
+  
+  export interface AuthResponse {
+    token: string;
+    user: User;
+  }
+  
+  export interface User {
+    id: string;
     name: string;
     email: string;
   }
@@ -7,9 +15,3 @@ export interface User {
     email: string;
     password: string;
   }
-  
-  export interface AuthResponse {
-    token: string;
-    user: User;
-  }
-  
