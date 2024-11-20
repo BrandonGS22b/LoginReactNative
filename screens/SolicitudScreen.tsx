@@ -8,9 +8,29 @@ import {
   eliminarSolicitud,
 } from '../services/solicitudService';
 
+// Define interfaces para los tipos de datos
+interface FormData {
+  categoria: string;
+  descripcion: string;
+  telefono: string;
+  departamento: string;
+  ciudad: string;
+  barrio: string;
+  direccion: string;
+  estado: string;
+}
+
+interface Solicitud {
+  _id: string;
+  categoria: string;
+  descripcion: string;
+  imagen?: string;
+  estado: string;
+}
+
 const SolicitudScreen = () => {
-  const [solicitudes, setSolicitudes] = useState([]);
-  const [formData, setFormData] = useState({
+  const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);  // Tipo para solicitudes
+  const [formData, setFormData] = useState<FormData>({
     categoria: '',
     descripcion: '',
     telefono: '',
@@ -19,10 +39,11 @@ const SolicitudScreen = () => {
     barrio: '',
     direccion: '',
     estado: 'Revisado',
-  });
+  });  // Tipo para formData
   const [imagen, setImagen] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
 
+  // Efecto para cargar solicitudes al iniciar
   useEffect(() => {
     fetchSolicitudes();
   }, []);
@@ -36,6 +57,7 @@ const SolicitudScreen = () => {
     }
   };
 
+  // Manejo de selección de imagen
   const handleImagePick = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -48,6 +70,7 @@ const SolicitudScreen = () => {
     }
   };
 
+  // Manejo del formulario para crear o actualizar una solicitud
   const handleSubmit = async () => {
     const solicitudForm = new FormData();
     Object.entries(formData).forEach(([key, value]) => solicitudForm.append(key, value));
@@ -71,6 +94,7 @@ const SolicitudScreen = () => {
     }
   };
 
+  // Resetear el formulario
   const resetForm = () => {
     setFormData({
       categoria: '',
@@ -85,6 +109,7 @@ const SolicitudScreen = () => {
     setImagen(null);
   };
 
+  // Manejo de eliminación de solicitud
   const handleDelete = async (id: string) => {
     try {
       await eliminarSolicitud(id);
@@ -94,11 +119,22 @@ const SolicitudScreen = () => {
     }
   };
 
-  const handleEdit = (solicitud: any) => {
-    setFormData(solicitud);
-    setImagen(solicitud.imagen || null);
-    setEditId(solicitud._id);
-  };
+  // Manejo de edición de solicitud
+const handleEdit = (solicitud: Solicitud) => {
+  // Asegúrate de incluir las propiedades faltantes al asignar el formulario
+  setFormData({
+    categoria: solicitud.categoria,
+    descripcion: solicitud.descripcion,
+    telefono: '',  // O el valor correspondiente si está presente en la solicitud
+    departamento: '',  // O el valor correspondiente si está presente en la solicitud
+    ciudad: '',  // O el valor correspondiente si está presente en la solicitud
+    barrio: '',  // O el valor correspondiente si está presente en la solicitud
+    direccion: '',  // O el valor correspondiente si está presente en la solicitud
+    estado: solicitud.estado,
+  });
+  setImagen(solicitud.imagen || null);
+  setEditId(solicitud._id);
+};
 
   return (
     <View style={styles.container}>

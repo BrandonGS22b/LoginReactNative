@@ -4,11 +4,15 @@ import { NavigationContainer } from '@react-navigation/native';
 import { useAuth } from '../hooks/useAuth';
 import LoginScreen from '../screens/LoginScreen';
 import DashboardScreen from '../screens/DashboardScreen';
+import SolicitudScreen from '../screens/SolicitudScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 
 // Define el tipo de las rutas
 type RootStackParamList = {
   Login: undefined;
   Dashboard: undefined;
+  Solicitud: undefined;
+  Perfil: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -19,10 +23,17 @@ const AppNavigator: React.FC = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator>
+        {/* Si el usuario está autenticado, muestra el Dashboard, sino, muestra el Login */}
         {user ? (
-          <Stack.Screen name="Dashboard" component={DashboardScreen} />
+          <>
+            <Stack.Screen name="Dashboard" component={DashboardScreen} />
+            <Stack.Screen name="Solicitud" component={SolicitudScreen} />
+            <Stack.Screen name="Perfil" component={ProfileScreen} />
+          </>
         ) : (
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>
