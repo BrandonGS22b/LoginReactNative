@@ -7,6 +7,8 @@ type AuthContextProps = {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  error: string | null;
+  loading: boolean; // Agregar estado de carga
 };
 
 type AuthProviderProps = {
@@ -17,8 +19,11 @@ export const AuthContext = createContext<AuthContextProps | undefined>(undefined
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false); // Estado de carga
 
   const login = async (email: string, password: string) => {
+    setLoading(true); // Iniciar carga
     try {
       const credentials: UserCredentials = { email, password };
       const { token, user } = await authService.login(credentials.email, credentials.password);
@@ -27,8 +32,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await AsyncStorage.setItem('user', JSON.stringify(user));
 
       setUser(user);
+      setError(null);  // Limpiar el error si el login es exitoso
     } catch (error) {
       console.error('Error en el login:', error instanceof Error ? error.message : error);
+      setError('Error al iniciar sesión. Por favor, intente nuevamente.');
+    } finally {
+      setLoading(false); // Detener carga
     }
   };
 
@@ -36,10 +45,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     await AsyncStorage.removeItem('token');
     await AsyncStorage.removeItem('user');
     setUser(null);
+    setError(null);
   };
 
   useEffect(() => {
     const loadUser = async () => {
+      setLoading(true); // Iniciar carga
       try {
         const token = await AsyncStorage.getItem('token');
         const userString = await AsyncStorage.getItem('user');
@@ -53,6 +64,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         await AsyncStorage.removeItem('token');
         await AsyncStorage.removeItem('user');
         setUser(null);
+      } finally {
+        setLoading(false); // Detener carga
       }
     };
 
@@ -60,7 +73,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, error, loading }}>
       {children}
     </AuthContext.Provider>
   );

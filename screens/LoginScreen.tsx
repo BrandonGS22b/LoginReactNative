@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -7,7 +7,7 @@ import { useAuth } from '../hooks/useAuth';
 
 type RootStackParamList = {
   Login: undefined;
-  Dashboard: undefined;
+  Estado: undefined;
 };
 
 type LoginScreenProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
@@ -15,8 +15,10 @@ type LoginScreenProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
 const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const [errorMessage, setErrorMessage] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false); // Estado de carga
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -24,19 +26,31 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       return;
     }
 
+    setLoading(true); // Iniciar carga
+
     try {
       await login(email, password);
-      navigation.replace('Dashboard'); // Redirige a la pantalla de Dashboard
+      setModalVisible(true); // Muestra el mensaje de bienvenida
     } catch (error) {
       setErrorMessage('Credenciales incorrectas');
-      setTimeout(() => setErrorMessage(''), 3000); // Limpia el mensaje de error después de 3 segundos
+      setTimeout(() => setErrorMessage(''), 3000);
+    } finally {
+      setLoading(false); // Detener carga
     }
+  };
+
+  const handleModalClose = () => {
+    setModalVisible(false);
+    navigation.reset({
+      index: 0, // Esto asegura que se reinicie la pila de navegación
+      routes: [{ name: 'Estado' }], // Esto va a navegar directamente a la pantalla 'Estado'
+    });
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Iniciar sesión</Text>
-      
+
       <Input 
         placeholder="Correo electrónico" 
         value={email} 
@@ -44,7 +58,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         keyboardType="email-address" 
         style={styles.input}
       />
-      
+
       <Input 
         placeholder="Contraseña" 
         value={password} 
@@ -52,10 +66,33 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         secureTextEntry 
         style={styles.input}
       />
-      
+
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
-      
-      <Button title="Iniciar sesión" onPress={handleLogin} style={styles.button} />
+
+      {/* Mostrar el ActivityIndicator si está cargando */}
+      {loading ? (
+        <ActivityIndicator size="large" color="#3498db" style={styles.loader} />
+      ) : (
+        <Button title="Iniciar sesión" onPress={handleLogin} style={styles.button} />
+      )}
+
+      <Modal
+        transparent
+        visible={modalVisible}
+        animationType="fade"
+        onRequestClose={handleModalClose}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>
+              ¡Bienvenido, {user?.name}!
+            </Text>
+            <TouchableOpacity style={styles.modalButton} onPress={handleModalClose}>
+              <Text style={styles.modalButtonText}>Continuar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -65,7 +102,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f2f2f2', // Fondo suave para un aspecto más limpio
+    backgroundColor: '#f2f2f2',
     paddingHorizontal: 20,
   },
   title: {
@@ -94,10 +131,40 @@ const styles = StyleSheet.create({
   button: {
     width: '100%',
     padding: 15,
-    backgroundColor: '#3498db', // Color de botón atractivo
+    backgroundColor: '#3498db',
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  loader: {
+    marginTop: 20,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    padding: 20,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  modalButton: {
+    padding: 10,
+    backgroundColor: '#3498db',
+    borderRadius: 5,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: '600',
   },
 });
 
