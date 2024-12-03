@@ -16,7 +16,7 @@ export const crearSolicitud = async (solicitudData: FormData) => {
 
 export const obtenerSolicitudes = async () => {
   try {
-    const response = await axios.get(`${API_URL}/solicitudes/getall`);
+    const response = await axios.get(`${API_URL}/getall`);
     return response.data;
   } catch (error: any) {
     console.error('Error al obtener las solicitudes:', error);
@@ -24,10 +24,10 @@ export const obtenerSolicitudes = async () => {
   }
 };
 
-export const actualizarSolicitud = async (id: string, solicitudData: FormData) => {
+export const actualizarSolicitud = async (id: string, solicitudData: { estado: string }) => {
   try {
     const response = await axios.put(`${API_URL}/solicitudes/update/${id}`, solicitudData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: { 'Content-Type': 'application/json' },
     });
     return response.data;
   } catch (error: any) {
@@ -35,6 +35,7 @@ export const actualizarSolicitud = async (id: string, solicitudData: FormData) =
     throw error.response?.data || 'Error en la solicitud.';
   }
 };
+
 
 export const eliminarSolicitud = async (id: string) => {
   try {

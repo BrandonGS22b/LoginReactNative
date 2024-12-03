@@ -6,6 +6,7 @@ import LoginScreen from '../screens/LoginScreen';
 import DashboardScreen from '../screens/DashboardScreen';
 import SolicitudScreen from '../screens/SolicitudScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import EstadoScreen from '../screens/EstadoScreen';
 
 // Define el tipo de las rutas
 type RootStackParamList = {
@@ -13,6 +14,7 @@ type RootStackParamList = {
   Dashboard: undefined;
   Solicitud: undefined;
   Perfil: undefined;
+  Estado: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -29,6 +31,7 @@ const AppNavigator: React.FC = () => {
             <Stack.Screen name="Dashboard" component={DashboardScreen} />
             <Stack.Screen name="Solicitud" component={SolicitudScreen} />
             <Stack.Screen name="Perfil" component={ProfileScreen} />
+            <Stack.Screen name="Estado" component={EstadoScreen} />
           </>
         ) : (
           <>
