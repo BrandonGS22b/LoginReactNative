@@ -40,10 +40,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   };
 
   const handleModalClose = () => {
+    console.log('Navegando a Estado...');
     setModalVisible(false);
     navigation.reset({
-      index: 0, // Esto asegura que se reinicie la pila de navegación
-      routes: [{ name: 'Estado' }], // Esto va a navegar directamente a la pantalla 'Estado'
+      index: 0,
+      routes: [{ name: 'Estado' }],
     });
   };
 

@@ -1,28 +1,33 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useAuth } from '../hooks/useAuth';
 
-// Definir el tipo de las rutas que el navegador manejará
 type RootStackParamList = {
   Splash: undefined;
   Login: undefined;
   Dashboard: undefined;
 };
 
-// Definir las propiedades del componente SplashScreen
 type SplashScreenProps = NativeStackScreenProps<RootStackParamList, 'Splash'>;
 
 const SplashScreen: React.FC<SplashScreenProps> = ({ navigation }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      navigation.replace('Login');  // Redirige a la pantalla Login después de un tiempo
-    }, 2000);  // Cambia este tiempo según lo necesites
+  const { user, loading } = useAuth();
 
-    return () => clearTimeout(timer); // Limpiar el timeout cuando el componente se desmonte
-  }, [navigation]);
+  useEffect(() => {
+    if (!loading) {
+      // Si no está cargando, redirige según el estado del usuario
+      if (user) {
+        navigation.replace('Dashboard'); // Usuario autenticado
+      } else {
+        navigation.replace('Login'); // Usuario no autenticado
+      }
+    }
+  }, [loading, user, navigation]);
 
   return (
     <View style={styles.container}>
+      <ActivityIndicator size="large" color="#3498db" />
       <Text style={styles.text}>Cargando...</Text>
     </View>
   );
@@ -33,9 +38,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f2f2f2',
   },
   text: {
-    fontSize: 24,
+    fontSize: 18,
+    marginTop: 20,
+    color: '#555',
   },
 });
 
