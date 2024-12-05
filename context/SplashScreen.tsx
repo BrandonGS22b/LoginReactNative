@@ -7,7 +7,7 @@ type RootStackParamList = {
   Splash: undefined;
   Login: undefined;
   Dashboard: undefined;
-};
+  Solicitud: undefined;};
 
 type SplashScreenProps = NativeStackScreenProps<RootStackParamList, 'Splash'>;
 
@@ -18,7 +18,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ navigation }) => {
     if (!loading) {
       // Si no está cargando, redirige según el estado del usuario
       if (user) {
-        navigation.replace('Dashboard'); // Usuario autenticado
+        navigation.replace('Solicitud'); // Usuario autenticado
       } else {
         navigation.replace('Login'); // Usuario no autenticado
       }
