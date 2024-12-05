@@ -66,14 +66,16 @@ const SolicitudScreen = ({ navigation }: any) => {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images, // Usa "Images" en lugar de "image"
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
 
-    if (!result.canceled && result.assets?.[0]?.uri) {
-      setImagen(result.assets[0].uri);
+    if (!result.canceled) {
+      setImagen(result.assets[0].uri); // Almacena la URI de la imagen seleccionada
+    } else {
+      console.log('Selección de imagen cancelada');
     }
   };
 
