@@ -15,10 +15,9 @@ type LoginScreenProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
 const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login, user } = useAuth();
+  const { login, user, userId, loading } = useAuth();
   const [errorMessage, setErrorMessage] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
-  const [loading, setLoading] = useState(false); // Estado de carga
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -26,16 +25,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       return;
     }
 
-    setLoading(true); // Iniciar carga
-
     try {
       await login(email, password);
-      setModalVisible(true); // Muestra el mensaje de bienvenida
+      if (userId) {
+        setModalVisible(true); // Muestra el mensaje de bienvenida
+      }
     } catch (error) {
       setErrorMessage('Credenciales incorrectas');
       setTimeout(() => setErrorMessage(''), 3000);
-    } finally {
-      setLoading(false); // Detener carga
     }
   };
 
@@ -70,7 +67,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
       {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
 
-      {/* Mostrar el ActivityIndicator si está cargando */}
       {loading ? (
         <ActivityIndicator size="large" color="#3498db" style={styles.loader} />
       ) : (
@@ -86,7 +82,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalText}>
-              ¡Bienvenido, {user?.name}!
+              ¡Bienvenido, {user?.name || 'Usuario'}!
             </Text>
             <TouchableOpacity style={styles.modalButton} onPress={handleModalClose}>
               <Text style={styles.modalButtonText}>Continuar</Text>

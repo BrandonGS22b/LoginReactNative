@@ -39,7 +39,7 @@ api.interceptors.request.use(
  * @param password Contraseña del usuario
  * @returns Información del usuario con token
  */
-const login = async (email: string, password: string): Promise<{ token: string; user: { id: string; name: string; email: string } }> => {
+const login = async (email: string, password: string): Promise<{ token: string; user: { _id: string; name: string; email: string } }> => {
   try {
     const response = await api.post('/login', { email, password });
     const { token, user } = response.data;

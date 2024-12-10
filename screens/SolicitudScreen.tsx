@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, Image } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, Image, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import BottomMenu from '../components/Menu';
@@ -34,7 +34,6 @@ const SolicitudScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Función para obtener las solicitudes desde el servicio
   const fetchSolicitudes = async () => {
     try {
       const response = await obtenerSolicitudes();
@@ -47,9 +46,9 @@ const SolicitudScreen = ({ navigation }: any) => {
 
   useEffect(() => {
     const requestPermissions = async () => {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        alert('Permiso para acceder a la galería es necesario!');
+      const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
+      if (cameraStatus !== 'granted') {
+        Alert.alert('Permisos requeridos', 'Se necesita acceso a la cámara para tomar fotos.');
       }
     };
 
@@ -57,25 +56,21 @@ const SolicitudScreen = ({ navigation }: any) => {
     fetchSolicitudes();
   }, []);
 
-  // Función para seleccionar una imagen desde la galería
-  const handleImagePicker = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  const handleOpenCamera = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      alert('Se necesita acceso a la biblioteca de fotos');
+      Alert.alert('Permisos denegados', 'Se necesita acceso a la cámara para tomar fotos.');
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images, // Usa "Images" en lugar de "image"
+    const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
 
     if (!result.canceled) {
-      setImagen(result.assets[0].uri); // Almacena la URI de la imagen seleccionada
-    } else {
-      console.log('Selección de imagen cancelada');
+      setImagen(result.assets[0].uri);
     }
   };
 
@@ -87,21 +82,19 @@ const SolicitudScreen = ({ navigation }: any) => {
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
-
-    // Validar campos antes de enviar
-    if (Object.values(formData).includes('') || !formData.categoria) {
-      alert('Por favor completa todos los campos antes de enviar.');
+  
+    if (Object.values(formData).some((value) => !value)) {
+      Alert.alert('Campos requeridos', 'Por favor completa todos los campos antes de enviar.');
       setLoading(false);
       return;
     }
-
+  
     try {
       const formDataWithImage = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
         formDataWithImage.append(key, value as string);
       });
-
-      // Si hay imagen seleccionada, añadirla al formData
+  
       if (imagen) {
         const uriParts = imagen.split('.');
         const fileType = uriParts[uriParts.length - 1];
@@ -109,8 +102,13 @@ const SolicitudScreen = ({ navigation }: any) => {
         const blob = await response.blob();
         formDataWithImage.append('imagen', blob, `imagen.${fileType}`);
       }
-
-      // Enviar solicitud
+  
+      // Aquí se imprime el contenido que se enviará al backend
+      console.log('Datos a enviar al backend:', {
+        ...formData,
+        imagen: imagen ? `Imagen cargada: imagen.${imagen.split('.').pop()}` : 'No se incluyó imagen',
+      });
+  
       await crearSolicitud(formDataWithImage);
       fetchSolicitudes();
       setFormData({
@@ -124,10 +122,10 @@ const SolicitudScreen = ({ navigation }: any) => {
         estado: 'Revisado',
       });
       setImagen(null);
-      alert('Solicitud creada con éxito.');
+      Alert.alert('Éxito', 'Solicitud creada con éxito.');
     } catch (error) {
       console.error('Error al enviar la solicitud:', error);
-      alert('Ocurrió un error al enviar la solicitud. Intenta nuevamente.');
+      Alert.alert('Error', 'Ocurrió un error al enviar la solicitud. Intenta nuevamente.');
     } finally {
       setLoading(false);
     }
@@ -160,7 +158,7 @@ const SolicitudScreen = ({ navigation }: any) => {
           />
         ))}
 
-        <Button title="Seleccionar Imagen" onPress={handleImagePicker} />
+        <Button title="Abrir Cámara" onPress={handleOpenCamera} />
         {imagen && <Image source={{ uri: imagen }} style={styles.image} />}
 
         <Button title={loading ? 'Cargando...' : 'Crear Solicitud'} onPress={handleSubmit} disabled={loading} />
