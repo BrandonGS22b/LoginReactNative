@@ -83,6 +83,7 @@ const SolicitudScreen = ({ navigation }: any) => {
     setLoading(true);
     setError(null);
   
+    // Validar que todos los campos sean completados
     if (Object.values(formData).some((value) => !value)) {
       Alert.alert('Campos requeridos', 'Por favor completa todos los campos antes de enviar.');
       setLoading(false);
@@ -95,6 +96,15 @@ const SolicitudScreen = ({ navigation }: any) => {
         formDataWithImage.append(key, value as string);
       });
   
+      // Agregar usuario_id desde el contexto de autenticación
+      if (user?._id) {
+        formDataWithImage.append('usuario_id', user._id);
+      } else {
+        Alert.alert('Error', 'Usuario no identificado.');
+        setLoading(false);
+        return;
+      }
+  
       if (imagen) {
         const uriParts = imagen.split('.');
         const fileType = uriParts[uriParts.length - 1];
@@ -103,9 +113,9 @@ const SolicitudScreen = ({ navigation }: any) => {
         formDataWithImage.append('imagen', blob, `imagen.${fileType}`);
       }
   
-      // Aquí se imprime el contenido que se enviará al backend
       console.log('Datos a enviar al backend:', {
         ...formData,
+        usuario_id: user._id,
         imagen: imagen ? `Imagen cargada: imagen.${imagen.split('.').pop()}` : 'No se incluyó imagen',
       });
   

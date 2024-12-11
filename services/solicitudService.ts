@@ -4,7 +4,7 @@ const API_URL = 'https://loginexpress-ts-jwt.onrender.com/api/solicitud'; // Cam
 
 export const crearSolicitud = async (solicitudData: FormData) => {
   try {
-    const response = await axios.post(`${API_URL}/solicitudes/create`, solicitudData, {
+    const response = await axios.post(`${API_URL}/create`, solicitudData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
