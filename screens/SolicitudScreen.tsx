@@ -83,7 +83,6 @@ const SolicitudScreen = ({ navigation }: any) => {
     setLoading(true);
     setError(null);
   
-    // Validar que todos los campos sean completados
     if (Object.values(formData).some((value) => !value)) {
       Alert.alert('Campos requeridos', 'Por favor completa todos los campos antes de enviar.');
       setLoading(false);
@@ -96,7 +95,6 @@ const SolicitudScreen = ({ navigation }: any) => {
         formDataWithImage.append(key, value as string);
       });
   
-      // Agregar usuario_id desde el contexto de autenticación
       if (user?._id) {
         formDataWithImage.append('usuario_id', user._id);
       } else {
@@ -110,14 +108,14 @@ const SolicitudScreen = ({ navigation }: any) => {
         const fileType = uriParts[uriParts.length - 1];
         const response = await fetch(imagen);
         const blob = await response.blob();
-        formDataWithImage.append('imagen', blob, `imagen.${fileType}`);
+        formDataWithImage.append('imagen', {
+          uri: imagen,
+          type: `image/${fileType}`,
+          name: `imagen.${fileType}`,
+        } as any);
       }
   
-      console.log('Datos a enviar al backend:', {
-        ...formData,
-        usuario_id: user._id,
-        imagen: imagen ? `Imagen cargada: imagen.${imagen.split('.').pop()}` : 'No se incluyó imagen',
-      });
+      console.log('Datos enviados:', formDataWithImage);
   
       await crearSolicitud(formDataWithImage);
       fetchSolicitudes();
