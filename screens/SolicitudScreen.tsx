@@ -34,15 +34,7 @@ const SolicitudScreen = ({ navigation }: any) => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSolicitudes = async () => {
-    try {
-      const response = await obtenerSolicitudes();
-      setSolicitudes(response.data);
-    } catch (error) {
-      console.error('Error al obtener las solicitudes:', error);
-      setError('No se pudo cargar las solicitudes.');
-    }
-  };
+  
 
   useEffect(() => {
     const requestPermissions = async () => {
@@ -53,7 +45,7 @@ const SolicitudScreen = ({ navigation }: any) => {
     };
 
     requestPermissions();
-    fetchSolicitudes();
+    
   }, []);
 
   const handleOpenCamera = async () => {
@@ -118,7 +110,7 @@ const SolicitudScreen = ({ navigation }: any) => {
       console.log('Datos enviados:', formDataWithImage);
   
       await crearSolicitud(formDataWithImage);
-      fetchSolicitudes();
+   
       setFormData({
         categoria: '',
         descripcion: '',

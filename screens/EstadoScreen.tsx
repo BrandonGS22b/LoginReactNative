@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, StyleSheet, Animated } from 'react-native';
-import {
-  obtenerSolicitudes,
-  actualizarSolicitud,
-} from '../services/solicitudService';
+import { View, Text, FlatList, StyleSheet, Animated, TextInput, Button } from 'react-native';
+import { obtenerSolicitudes, obtenerSolicitudesPorUsuarioId, actualizarSolicitud } from '../services/solicitudService';
 import BottomMenu from '../components/Menu';
 import { useAuth } from '../hooks/useAuth';
 
@@ -14,46 +11,75 @@ interface Solicitud {
   estado: string;
 }
 
-const estados = ['Revisado', 'En Proceso', 'Solucionado'];
+const estados = ['Revisado', 'En proceso', 'Solucionado'];
 
-const EstadoScreen : React.FC = ({ navigation }: any) => {
-  const { user, logout } = useAuth();
+const EstadoScreen: React.FC = ({ navigation }: any) => {
+  const { userId, logout } = useAuth();  // Obtenemos el userId desde el contexto
   const [solicitudes, setSolicitudes] = useState<Solicitud[]>([]);
   const [progress, setProgress] = useState<Record<string, Animated.Value>>({});
+  const [solicitudId, setSolicitudId] = useState('');
+  const [solicitudSeleccionada, setSolicitudSeleccionada] = useState<Solicitud | null>(null);
 
   useEffect(() => {
-    fetchSolicitudes();
-  }, []);
+    if (userId) {
+      console.log('User ID:', userId);  // Imprime el userId
+      fetchSolicitudes(userId);  // Llamamos a fetchSolicitudes pasando userId
+    }
+  }, [userId]);  // Dependemos de userId para que se actualice cuando cambie
 
-  const fetchSolicitudes = async () => {
+  const fetchSolicitudes = async (userId: string) => {
+    if (!userId) {
+      console.error("No se encontró el usuario autenticado.");
+      return;
+    }
+
+    console.log('User ID en fetchSolicitudes:', userId);  // Imprime el userId
     try {
-      const data = await obtenerSolicitudes();
+      // Usamos userId para obtener las solicitudes
+      const data = await obtenerSolicitudesPorUsuarioId(userId);  
       setSolicitudes(data);
       initializeProgress(data);
     } catch (error) {
-      console.error(error);
+      console.error("Error al obtener solicitudes:", error);
+    }
+  };
+
+  const fetchSolicitudPorId = async () => {
+    if (!userId) {
+      console.log('Por favor ingrese un ID de solicitud.');
+      return;
+    }
+    try {
+      const data = await obtenerSolicitudesPorUsuarioId(userId);
+      if (data) {
+        setSolicitudSeleccionada(data);
+      } else {
+        console.log('No se encontró la solicitud con ese ID');
+      }
+    } catch (error) {
+      console.error('Error al obtener la solicitud:', error);
     }
   };
 
   const initializeProgress = (data: Solicitud[]) => {
     const progressValues = data.reduce((acc, solicitud) => {
-      const progressValue = new Animated.Value(getProgress(solicitud.estado));
-      acc[solicitud._id] = progressValue;
+      acc[solicitud._id] = new Animated.Value(getProgress(solicitud.estado));
       return acc;
     }, {} as Record<string, Animated.Value>);
-  
-    // Asegúrate de que todos los valores en progress sean instancias de Animated.Value
-    for (const key in progressValues) {
-      if (!(progressValues[key] instanceof Animated.Value)) {
-        console.error(`Valor no es una instancia de Animated.Value: ${key}`);
-      }
-    }
-  
     setProgress(progressValues);
   };
 
   const getProgress = (estado: string): number => {
-    return (estados.indexOf(estado) + 1) / estados.length;
+    switch (estado) {
+      case 'Revisado':
+        return 0.25;  // 25% de progreso
+      case 'En proceso':
+        return 0.6;   // 60% de progreso
+      case 'Solucionado':
+        return 1;     // 100% de progreso
+      default:
+        return 0;     // Sin progreso
+    }
   };
 
   const avanzarEstado = async (solicitud: Solicitud) => {
@@ -62,13 +88,18 @@ const EstadoScreen : React.FC = ({ navigation }: any) => {
       const nuevoEstado = estados[currentIndex + 1];
       try {
         await actualizarSolicitud(solicitud._id, { estado: nuevoEstado });
-        fetchSolicitudes();  // Actualizar las solicitudes después de avanzar el estado
 
-        // Animar barra de estado
+        // Actualizamos el estado local sin recargar todo
+        setSolicitudes((prevState) => 
+          prevState.map((s) => 
+            s._id === solicitud._id ? { ...s, estado: nuevoEstado } : s
+          )
+        );
+
         Animated.timing(progress[solicitud._id], {
           toValue: getProgress(nuevoEstado),
           duration: 500,
-          useNativeDriver: false,  // Mantener en false debido a las animaciones de propiedades no soportadas
+          useNativeDriver: false, // Necesario ya que estamos animando valores no transformables directamente
         }).start();
       } catch (error) {
         console.error(error);
@@ -84,15 +115,12 @@ const EstadoScreen : React.FC = ({ navigation }: any) => {
       <View style={styles.progressContainer}>
         {progress[item._id] && (
           <Animated.View
-            style={[
-              styles.progressBar,
-              {
-                width: progress[item._id]?.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ['0%', '100%'],
-                }),
-              },
-            ]}
+            style={[styles.progressBar, {
+              width: progress[item._id].interpolate({
+                inputRange: [0, 1],
+                outputRange: ['0%', '100%'],
+              }),
+            }]}
           />
         )}
       </View>
@@ -109,12 +137,27 @@ const EstadoScreen : React.FC = ({ navigation }: any) => {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={solicitudes}
-        keyExtractor={(item) => item._id}
-        renderItem={renderSolicitud}
+      <TextInput
+        style={styles.input}
+        placeholder="Ingrese ID de la solicitud"
+        value={solicitudId}
+        onChangeText={setSolicitudId}
       />
-      {/* Menú inferior */}
+      <Button title="Buscar Solicitud" onPress={fetchSolicitudPorId} />
+
+      {solicitudSeleccionada ? (
+        <View style={styles.card}>
+          <Text style={styles.title}>{solicitudSeleccionada.categoria}</Text>
+          <Text>{solicitudSeleccionada.descripcion}</Text>
+          <Text>Estado: {solicitudSeleccionada.estado}</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={solicitudes}
+          keyExtractor={(item) => item._id}
+          renderItem={renderSolicitud}
+        />
+      )}
       <View style={styles.menuContainer}>
         <BottomMenu
           onSolicitudPress={() => navigation.navigate('Solicitud')}
@@ -132,7 +175,7 @@ const styles = StyleSheet.create({
     flex: 1, 
     padding: 10, 
     backgroundColor: '#f5f5f5', 
-    paddingBottom: 80 // Añadir espacio al fondo para que el menú no quede tapado
+    paddingBottom: 80,
   },
   card: { 
     backgroundColor: '#fff', 
@@ -162,13 +205,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'right',
   },
+  input: {
+    backgroundColor: '#fff',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
   menuContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    
-  }
+  },
 });
 
 export default EstadoScreen;

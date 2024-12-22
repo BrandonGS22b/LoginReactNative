@@ -24,6 +24,34 @@ export const obtenerSolicitudes = async () => {
   }
 };
 
+
+export const obtenerSolicitudesPorUsuarioId = async (id: string) => {
+  if (!id) {
+    throw new Error('El ID de la solicitud es obligatorio.');
+  }
+
+  try {
+    const response = await axios.get(`${API_URL}/getall/${id}`);
+    return response.data;
+  } catch (error: any) {
+    // Manejo de errores detallado
+    if (error.response) {
+      // Error con la respuesta del servidor
+      console.error('Error en la respuesta del servidor:', error.response.data);
+      throw new Error(error.response?.data.message || 'Error en la solicitud.');
+    } else if (error.request) {
+      // El servidor no respondió
+      console.error('No se recibió respuesta del servidor:', error.request);
+      throw new Error('No se recibió respuesta del servidor');
+    } else {
+      // Error general
+      console.error('Error al realizar la solicitud:', error.message);
+      throw new Error('Error en la solicitud');
+    }
+  }
+};
+
+
 export const actualizarSolicitud = async (id: string, solicitudData: { estado: string }) => {
   try {
     const response = await axios.put(`${API_URL}/solicitudes/update/${id}`, solicitudData, {
