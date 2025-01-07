@@ -32,7 +32,22 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
-
+const changePassword = async (email: string, document: string, newPassword: string): Promise<any> => {
+  try {
+    const response = await api.patch('/changePassword', {
+      email: email, // Clave correcta para el backend
+      documento: document,
+      nuevaClave: newPassword,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error('Error cambiando contraseña:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.error || 'Error al cambiar la contraseña');
+    }
+    throw error;
+  }
+};
 /**
  * Función para iniciar sesión
  * @param email Email del usuario
@@ -170,7 +185,11 @@ const getCurrentUser = async (): Promise<{ name: string; token: string } | null>
     console.error('Error obteniendo usuario actual:', error);
     throw error;
   }
+  
+  
 };
+
+
 
 /**
  * Exportar todas las funciones como un servicio
@@ -183,6 +202,7 @@ const authService = {
   deleteUsuario,
   updateUsuario,
   getCurrentUser,
+  changePassword,
 };
 
 export default authService;

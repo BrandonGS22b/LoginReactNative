@@ -1,13 +1,14 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
-import { useAuth } from '../hooks/useAuth'; // Verifica que este hook esté funcionando bien
-import SplashScreen from './../context/SplashScreen';  // Asegúrate de importar correctamente
+import { useAuth } from '../hooks/useAuth';
+import SplashScreen from './../context/SplashScreen';
 import LoginScreen from './../screens/LoginScreen';
 import DashboardScreen from './../screens/DashboardScreen';
 import SolicitudScreen from './../screens/SolicitudScreen';
 import ProfileScreen from './../screens/ProfileScreen';
 import EstadoScreen from './../screens/EstadoScreen';
+import ChangePasswordScreen from './../screens/changepassword'; // Asegúrate de importar la pantalla de cambio de contraseña
 
 // Definir el tipo de las rutas
 type RootStackParamList = {
@@ -17,6 +18,7 @@ type RootStackParamList = {
   Solicitud: undefined;
   Perfil: undefined;
   Estado: undefined;
+  ChangePassword: undefined; // Agregar la ruta ChangePassword
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -28,11 +30,7 @@ const AppNavigator: React.FC = () => {
     <NavigationContainer>
       <Stack.Navigator>
         {/* Registra la pantalla Splash como la pantalla inicial */}
-        <Stack.Screen 
-          name="Splash" 
-          component={SplashScreen} 
-          options={{ headerShown: false }} 
-        />
+        <Stack.Screen name="Splash" component={SplashScreen} options={{ headerShown: false }} />
 
         {/* Si el usuario está autenticado, mostramos el Dashboard, si no, mostramos el Login */}
         {user ? (
@@ -45,6 +43,9 @@ const AppNavigator: React.FC = () => {
         ) : (
           <Stack.Screen name="Login" component={LoginScreen} />
         )}
+
+        {/* Ruta de la pantalla ChangePassword */}
+        <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

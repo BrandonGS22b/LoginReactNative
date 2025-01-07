@@ -9,6 +9,7 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^6.7.2",
     "@react-native-async-storage/async-storage": "^2.0.0",
     "@react-native-firebase/app": "^21.6.0",
     "@react-native-firebase/storage": "^21.6.0",
