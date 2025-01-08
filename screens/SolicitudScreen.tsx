@@ -1,30 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, Image, Alert } from 'react-native';
+import {
+  ScrollView,
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  Image,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import BottomMenu from '../components/Menu';
 import { useAuth } from '../hooks/useAuth';
-import { crearSolicitud, obtenerSolicitudes } from '../services/solicitudService';
-
-interface FormData {
-  categoria: string;
-  descripcion: string;
-  telefono: string;
-  departamento: string;
-  ciudad: string;
-  barrio: string;
-  direccion: string;
-  estado: 'Revisado' | 'En proceso' | 'Solucionado';
-}
+import { crearSolicitud } from '../services/solicitudService';
 
 const SolicitudScreen = ({ navigation }: any) => {
   const { user, logout } = useAuth();
-  const [solicitudes, setSolicitudes] = useState<any[]>([]);
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState({
     categoria: '',
     descripcion: '',
     telefono: '',
-    departamento: '',
+    departamento: 'Santander',
     ciudad: '',
     barrio: '',
     direccion: '',
@@ -32,9 +31,6 @@ const SolicitudScreen = ({ navigation }: any) => {
   });
   const [imagen, setImagen] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  
 
   useEffect(() => {
     const requestPermissions = async () => {
@@ -45,16 +41,9 @@ const SolicitudScreen = ({ navigation }: any) => {
     };
 
     requestPermissions();
-    
   }, []);
 
   const handleOpenCamera = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permisos denegados', 'Se necesita acceso a la cámara para tomar fotos.');
-      return;
-    }
-
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       aspect: [4, 3],
@@ -66,27 +55,21 @@ const SolicitudScreen = ({ navigation }: any) => {
     }
   };
 
-  const handleLogout = async () => {
-    await logout();
-    navigation.replace('Login');
-  };
-
   const handleSubmit = async () => {
     setLoading(true);
-    setError(null);
-  
+
     if (Object.values(formData).some((value) => !value)) {
       Alert.alert('Campos requeridos', 'Por favor completa todos los campos antes de enviar.');
       setLoading(false);
       return;
     }
-  
+
     try {
       const formDataWithImage = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
         formDataWithImage.append(key, value as string);
       });
-  
+
       if (user?._id) {
         formDataWithImage.append('usuario_id', user._id);
       } else {
@@ -94,7 +77,7 @@ const SolicitudScreen = ({ navigation }: any) => {
         setLoading(false);
         return;
       }
-  
+
       if (imagen) {
         const uriParts = imagen.split('.');
         const fileType = uriParts[uriParts.length - 1];
@@ -106,16 +89,14 @@ const SolicitudScreen = ({ navigation }: any) => {
           name: `imagen.${fileType}`,
         } as any);
       }
-  
-      console.log('Datos enviados:', formDataWithImage);
-  
+
       await crearSolicitud(formDataWithImage);
-   
+
       setFormData({
         categoria: '',
         descripcion: '',
         telefono: '',
-        departamento: '',
+        departamento: 'Santander',
         ciudad: '',
         barrio: '',
         direccion: '',
@@ -124,7 +105,6 @@ const SolicitudScreen = ({ navigation }: any) => {
       setImagen(null);
       Alert.alert('Éxito', 'Solicitud creada con éxito.');
     } catch (error) {
-      console.error('Error al enviar la solicitud:', error);
       Alert.alert('Error', 'Ocurrió un error al enviar la solicitud. Intenta nuevamente.');
     } finally {
       setLoading(false);
@@ -132,8 +112,14 @@ const SolicitudScreen = ({ navigation }: any) => {
   };
 
   return (
-    <View style={styles.screenContainer}>
-      <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.screenContainer}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={styles.title}>Gestión de Solicitudes</Text>
 
         <Text style={styles.label}>Categoría</Text>
@@ -148,54 +134,72 @@ const SolicitudScreen = ({ navigation }: any) => {
           <Picker.Item label="Denuncia" value="Denuncia" />
         </Picker>
 
-        {['descripcion', 'telefono', 'departamento', 'ciudad', 'barrio', 'direccion'].map((field, index) => (
-          <TextInput
-            key={index}
-            style={styles.input}
-            placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-            value={(formData as any)[field]}
-            onChangeText={(text) => setFormData({ ...formData, [field]: text })}
-          />
-        ))}
+        <TextInput
+          style={styles.input}
+          placeholder="Descripción"
+          value={formData.descripcion}
+          onChangeText={(text) => setFormData({ ...formData, descripcion: text })}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Teléfono"
+          value={formData.telefono}
+          onChangeText={(text) => setFormData({ ...formData, telefono: text })}
+        />
+
+        <Text style={styles.label}>Ciudad</Text>
+        <Picker
+          selectedValue={formData.ciudad}
+          onValueChange={(value) => setFormData({ ...formData, ciudad: value })}
+          style={styles.picker}
+        >
+          <Picker.Item label="Seleccione una ciudad" value="" />
+          <Picker.Item label="Girón" value="Giron" />
+          <Picker.Item label="Bucaramanga" value="Bucaramanga" />
+          <Picker.Item label="Floridablanca" value="Floridablanca" />
+          <Picker.Item label="Piedecuesta" value="Piedecuesta" />
+        </Picker>
+
+        <TextInput
+          style={styles.input}
+          placeholder="Barrio"
+          value={formData.barrio}
+          onChangeText={(text) => setFormData({ ...formData, barrio: text })}
+        />
+
+        <TextInput
+          style={styles.input}
+          placeholder="Dirección"
+          value={formData.direccion}
+          onChangeText={(text) => setFormData({ ...formData, direccion: text })}
+        />
 
         <Button title="Abrir Cámara" onPress={handleOpenCamera} />
         {imagen && <Image source={{ uri: imagen }} style={styles.image} />}
 
+        <View style={styles.buttonSpacing} />
         <Button title={loading ? 'Cargando...' : 'Crear Solicitud'} onPress={handleSubmit} disabled={loading} />
-
-        {error && <Text style={styles.errorText}>{error}</Text>}
-
-        <FlatList
-          data={solicitudes}
-          renderItem={({ item }) => (
-            <View style={styles.solicitudItem}>
-              <Text>{item.descripcion}</Text>
-              {item.imagen && <Image source={{ uri: item.imagen }} style={styles.solicitudImage} />}
-            </View>
-          )}
-          keyExtractor={(item) => item._id}
-        />
-      </View>
+        <View style={{ height: 100 }} />
+      </ScrollView>
 
       <BottomMenu
         onSolicitudPress={() => navigation.navigate('Solicitud')}
         onEstadoSolicitudPress={() => navigation.navigate('Estado')}
         onPerfilPress={() => navigation.navigate('Perfil')}
-        onLogoutPress={handleLogout}
+        onLogoutPress={async () => await logout()}
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
-    justifyContent: 'space-between',
   },
-  container: {
-    flex: 1,
+  scrollContainer: {
     padding: 16,
-    marginBottom: 60,
+    paddingBottom: 120, // Espacio adicional para evitar que el menú tape el contenido
   },
   title: {
     fontSize: 24,
@@ -224,17 +228,8 @@ const styles = StyleSheet.create({
     height: 100,
     marginTop: 12,
   },
-  errorText: {
-    color: 'red',
-    marginBottom: 12,
-  },
-  solicitudItem: {
-    marginBottom: 16,
-  },
-  solicitudImage: {
-    width: 100,
-    height: 100,
-    marginTop: 8,
+  buttonSpacing: {
+    marginVertical: 16,
   },
 });
 
